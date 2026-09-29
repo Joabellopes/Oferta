@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração | Ofertas do Joabel</title>
+    <link rel="stylesheet" href="css/admin.css?v=2">
+</head>
+<body>
+
+<header class="admin-header">
+    <div class="admin-container header-inner">
+        <a class="brand" href="index.html">OFERTAS<span>DO JOABEL</span></a>
+
+        <nav class="admin-nav" aria-label="Navegação administrativa">
+            <a href="index.html">Ver site</a>
+            <a href="admin.html" class="active">Administração</a>
+        </nav>
+    </div>
+</header>
+
+<main class="admin-container admin-main">
+
+    <section class="page-heading">
+        <div>
+            <span class="eyebrow">PAINEL ADMINISTRATIVO</span>
+            <h1>Gerenciar ofertas</h1>
+            <p>Cadastre, atualize e organize os produtos do site.</p>
+        </div>
+        <button id="btnAtualizar" class="btn btn-secondary" type="button">
+            <span aria-hidden="true">↻</span> Atualizar
+        </button>
+    </section>
+
+    <section class="stats-grid" aria-label="Resumo">
+        <article class="stat-card">
+            <span>Total de ofertas</span>
+            <strong id="statTotal">0</strong>
+        </article>
+        <article class="stat-card">
+            <span>Com desconto</span>
+            <strong id="statDesconto">0</strong>
+        </article>
+        <article class="stat-card">
+            <span>Lojas</span>
+            <strong id="statLojas">0</strong>
+        </article>
+    </section>
+
+    <section class="panel" id="formPanel">
+        <div class="panel-heading">
+            <div>
+                <span class="eyebrow">CADASTRO</span>
+                <h2 id="formTitle">Nova oferta</h2>
+            </div>
+            <button id="btnCancelarEdicao" class="btn btn-ghost hidden" type="button">
+                Cancelar edição
+            </button>
+        </div>
+
+        <form id="offerForm" novalidate>
+            <div class="form-grid">
+                <div class="field field-wide">
+                    <label for="nomeProduto">Nome do produto *</label>
+                    <input id="nomeProduto" type="text" maxlength="255"
+                           placeholder="Ex.: Teclado Mecânico" required>
+                </div>
+
+                <div class="field">
+                    <label for="categoria">Categoria *</label>
+                    <select id="categoria" required>
+                        <option value="">Carregando categorias...</option>
+                    </select>
+                </div>
+
+                <div class="field field-wide">
+                    <label for="descricao">Descrição</label>
+                    <textarea id="descricao" rows="4"
+                              placeholder="Descreva o produto..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Preço</h3>
+                <div class="form-grid three">
+                    <div class="field">
+                        <label for="precoAntigo">Preço antigo</label>
+                        <input id="precoAntigo" type="number" min="0" step="0.01" placeholder="199.90">
+                    </div>
+
+                    <div class="field">
+                        <label for="precoAtual">Preço atual *</label>
+                        <input id="precoAtual" type="number" min="0.01" step="0.01" placeholder="99.90" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="desconto">Desconto</label>
+                        <div class="input-suffix">
+                            <input id="desconto" type="number" readonly>
+                            <span>%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Imagem</h3>
+                <div class="image-editor">
+                    <div class="field">
+                        <label for="imagem">URL da imagem</label>
+                        <input id="imagem" type="url" placeholder="https://...">
+                        <small>A imagem será usada na vitrine do site.</small>
+                    </div>
+                    <div class="image-preview" id="imagePreview">
+                        <span id="previewText">Prévia</span>
+                        <img id="previewImage" alt="Prévia do produto">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Loja e links</h3>
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="loja">Loja *</label>
+                        <select id="loja" required>
+                            <option value="">Selecione a loja</option>
+                            <option value="Mercado Livre">Mercado Livre</option>
+                            <option value="Shopee">Shopee</option>
+                            <option value="Amazon">Amazon</option>
+                            <option value="Magazine Luiza">Magazine Luiza</option>
+                            <option value="Outra">Outra</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="avaliacao">Avaliação</label>
+                        <input id="avaliacao" type="number" min="0" max="5" step="0.1" placeholder="4.8">
+                    </div>
+
+                    <div class="field">
+                        <label for="linkProduto">Link do produto</label>
+                        <input id="linkProduto" type="url" placeholder="https://...">
+                    </div>
+
+                    <div class="field">
+                        <label for="linkAfiliado">Link de afiliado</label>
+                        <input id="linkAfiliado" type="url" placeholder="https://...">
+                    </div>
+                </div>
+            </div>
+
+            <div id="mensagem" class="message" role="status" aria-live="polite"></div>
+
+            <div class="form-actions">
+                <button id="btnLimpar" class="btn btn-ghost" type="button">Limpar</button>
+                <button id="btnSalvar" class="btn btn-primary" type="submit">
+                    Cadastrar oferta
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <section class="panel">
+        <div class="panel-heading products-heading">
+            <div>
+                <span class="eyebrow">CATÁLOGO</span>
+                <h2>Ofertas cadastradas</h2>
+            </div>
+            <span id="contadorProdutos" class="counter">0 ofertas</span>
+        </div>
+
+        <div class="toolbar">
+            <div class="search-box">
+                <span aria-hidden="true">⌕</span>
+                <input id="buscaProdutos" type="search" placeholder="Pesquisar produto...">
+            </div>
+
+            <select id="filtroCategoria" aria-label="Filtrar por categoria">
+                <option value="">Todas as categorias</option>
+            </select>
+
+            <select id="filtroLoja" aria-label="Filtrar por loja">
+                <option value="">Todas as lojas</option>
+                <option value="Mercado Livre">Mercado Livre</option>
+                <option value="Shopee">Shopee</option>
+                <option value="Amazon">Amazon</option>
+                <option value="Magazine Luiza">Magazine Luiza</option>
+                <option value="Outra">Outra</option>
+            </select>
+        </div>
+
+        <div id="listaProdutos" class="products-list">
+            <div class="loading">Carregando ofertas...</div>
+        </div>
+    </section>
+
+</main>
+
+<div id="confirmModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <span class="modal-icon">!</span>
+        <h2 id="modalTitle">Excluir oferta?</h2>
+        <p id="modalText">Esta ação não poderá ser desfeita.</p>
+        <div class="modal-actions">
+            <button id="btnModalCancelar" class="btn btn-ghost" type="button">Cancelar</button>
+            <button id="btnModalExcluir" class="btn btn-danger" type="button">Excluir</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="js/admin.js?v=2"></script>
+</body>
+</html>

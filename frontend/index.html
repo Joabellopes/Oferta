@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Ofertas do Joabel - produtos e promoções em um só lugar.">
+    <title>Ofertas do Joabel</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+<header class="hero">
+    <div class="container">
+        <nav class="navbar">
+            <a href="index.html" class="logo">
+                OFERTAS<span>DO JOABEL</span>
+            </a>
+
+            <div class="menu">
+
+    <a href="index.html">
+        Início
+    </a>
+
+    <a href="index.html#categorias">
+        Categorias
+    </a>
+
+    <a href="index.html#ofertas">
+        Ofertas
+    </a>
+
+    <a href="admin.html" class="menu-admin">
+        Administração
+    </a>
+
+</div>
+        </nav>
+
+        <div class="hero-content">
+            <div class="hero-text">
+                <span class="hero-tag">🔥 OFERTAS TODOS OS DIAS</span>
+
+                <h1>
+                    ENCONTRE.<br>
+                    COMPARE.<br>
+                    <strong>ECONOMIZE.</strong>
+                </h1>
+
+                <p>
+                    Os melhores produtos e promoções
+                    encontrados em um só lugar.
+                </p>
+            </div>
+
+            <form id="form-busca" class="busca">
+                <input
+                    type="text"
+                    id="campo-busca"
+                    placeholder="🔎 O que você está procurando?"
+                    autocomplete="off"
+                >
+                <button type="submit">BUSCAR</button>
+            </form>
+        </div>
+    </div>
+</header>
+
+<section id="categorias" class="categorias">
+    <div class="container">
+        <div class="section-header">
+            <span>EXPLORE</span>
+            <h2>Encontre por categoria</h2>
+        </div>
+
+        <div class="categorias-lista">
+            <button
+                type="button"
+                id="btn-todas"
+                id="btn-todas" class="categoria ativa"
+                onclick="carregarProdutos()"
+            >
+                🔥 Todas
+            </button>
+
+            <div id="lista-categorias"></div>
+        </div>
+    </div>
+</section>
+
+<main id="ofertas" class="container ofertas-section">
+    <div class="section-header ofertas-header">
+        <div>
+            <span>SELEÇÃO JOABEL</span>
+            <h2>Ofertas em destaque</h2>
+        </div>
+    </div>
+
+    <div id="status-produtos" class="status-produtos"></div>
+
+    <div id="produtos" class="produtos">
+        <p>Carregando ofertas...</p>
+    </div>
+</main>
+
+<section class="beneficios">
+    <div class="container">
+        <div class="section-header">
+            <span>POR QUE OFERTAS DO JOABEL?</span>
+            <h2>Comprar melhor começa<br>por encontrar melhor.</h2>
+        </div>
+
+        <div class="beneficios-grid">
+            <div class="beneficio">
+                <div class="beneficio-numero">01</div>
+                <h3>Encontre</h3>
+                <p>Produtos selecionados em diferentes lojas.</p>
+            </div>
+
+            <div class="beneficio">
+                <div class="beneficio-numero">02</div>
+                <h3>Compare</h3>
+                <p>Veja preços e descontos antes de comprar.</p>
+            </div>
+
+            <div class="beneficio">
+                <div class="beneficio-numero">03</div>
+                <h3>Economize</h3>
+                <p>Aproveite ofertas e promoções encontradas.</p>
+            </div>
+
+            <div class="beneficio">
+                <div class="beneficio-numero">04</div>
+                <h3>Compre</h3>
+                <p>Acesse diretamente a loja da oferta.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta">
+    <div class="container">
+        <span>OFERTAS DO JOABEL</span>
+        <h2>A próxima oferta<br>pode estar aqui.</h2>
+        <a href="#ofertas">EXPLORAR OFERTAS →</a>
+    </div>
+</section>
+
+<footer>
+    <div class="container footer-content">
+        <div>
+            <a href="index.html" class="logo">
+                OFERTAS<span>DO JOABEL</span>
+            </a>
+            <p>As melhores ofertas em um só lugar.</p>
+        </div>
+
+        <div class="footer-copy">
+            © 2026 Ofertas do Joabel
+        </div>
+    </div>
+</footer>
+
+<script src="js/app.js?v=3"></script>
+</body>
+</html>
