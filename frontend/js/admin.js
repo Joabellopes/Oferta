@@ -1,11 +1,87 @@
-const API = "http://127.0.0.1:8000";
+const API = window.API_BASE || (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && location.port !== "8000" ? "http://127.0.0.1:8000" : "");
+const ADMIN_TOKEN_KEY = "ofertasAdminToken";
 
 let produtos = [];
 let categorias = [];
 let editandoId = null;
 let produtoParaExcluir = null;
+let resultadosMercadoLivre = [];
+let imagemArquivoPendente = null;
+let imagemPreviewLocal = null;
 
 const $ = (id) => document.getElementById(id);
+
+function tokenAdmin() {
+    return sessionStorage.getItem(ADMIN_TOKEN_KEY);
+}
+
+function bloquearPainel(bloqueado) {
+    document.querySelector(".admin-header")?.toggleAttribute("inert", bloqueado);
+    document.querySelector(".admin-main")?.toggleAttribute("inert", bloqueado);
+}
+
+function fetchAdmin(url, options = {}) {
+    const headers = new Headers(options.headers || {});
+    const token = tokenAdmin();
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    return fetch(url, { ...options, headers });
+}
+
+async function prepararAutenticacao() {
+    const resposta = await fetch(`${API}/auth/status`);
+    if (!resposta.ok) throw new Error("Não foi possível verificar o acesso administrativo.");
+    const { enabled } = await resposta.json();
+    if (!enabled) return;
+
+    const token = tokenAdmin();
+    if (token) {
+        const validacao = await fetchAdmin(`${API}/auth/verify`);
+        if (validacao.ok) {
+            $("btnLogout").classList.remove("hidden");
+            return;
+        }
+        sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+    }
+
+    $("loginOverlay").classList.remove("hidden");
+    bloquearPainel(true);
+    $("adminLoginUser").focus();
+}
+
+async function entrarNoPainel(event) {
+    event.preventDefault();
+    const mensagem = $("loginMessage");
+    const botao = $("loginSubmit");
+    mensagem.textContent = "";
+    botao.disabled = true;
+    botao.textContent = "Entrando...";
+
+    try {
+        const resposta = await fetch(`${API}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({
+                username: $("adminLoginUser").value.trim(),
+                password: $("adminLoginPassword").value
+            })
+        });
+        const resultado = await resposta.json();
+        if (!resposta.ok) throw new Error(resultado.detail || "Não foi possível entrar.");
+        if (resultado.access_token) {
+            sessionStorage.setItem(ADMIN_TOKEN_KEY, resultado.access_token);
+        }
+        bloquearPainel(false);
+        $("loginOverlay").classList.add("hidden");
+        $("btnLogout").classList.remove("hidden");
+        await carregarCategorias();
+        await carregarProdutos();
+    } catch (erro) {
+        mensagem.textContent = erro.message;
+    } finally {
+        botao.disabled = false;
+        botao.textContent = "Entrar no painel";
+    }
+}
 
 function numero(valor) {
     const n = Number(valor);
@@ -17,6 +93,97 @@ function moeda(valor) {
         style: "currency",
         currency: "BRL"
     });
+}
+
+function mostrarMensagemMercadoLivre(texto, erro = false) {
+    const area = $("mercadoLivreMessage");
+    area.textContent = texto;
+    area.classList.toggle("error", erro);
+}
+
+function renderizarResultadosMercadoLivre(resultados) {
+    const area = $("mercadoLivreResults");
+    resultadosMercadoLivre = resultados;
+
+    if (!resultados.length) {
+        area.innerHTML = "";
+        mostrarMensagemMercadoLivre("Nenhum produto encontrado para essa busca.");
+        return;
+    }
+
+    mostrarMensagemMercadoLivre(`${resultados.length} resultado(s). Selecione um para revisar no formulário.`);
+    area.innerHTML = resultados.map((produto, index) => `
+        <article class="marketplace-result">
+            ${produto.imagem
+                ? `<img src="${escapeHtml(produto.imagem)}" alt="" loading="lazy">`
+                : '<span class="marketplace-no-image" aria-hidden="true">Sem foto</span>'}
+            <div class="marketplace-result-copy">
+                <strong title="${escapeHtml(produto.nome)}">${escapeHtml(produto.nome)}</strong>
+                <span>${moeda(produto.preco_atual)}</span>
+                <button type="button" data-marketplace-index="${index}">Usar no cadastro</button>
+            </div>
+        </article>
+    `).join("");
+}
+
+async function buscarNoMercadoLivre(event) {
+    event.preventDefault();
+    const termo = $("mercadoLivreTermo").value.trim();
+    if (termo.length < 2) return;
+
+    const botao = $("mercadoLivreBuscar");
+    botao.disabled = true;
+    botao.textContent = "Buscando...";
+    $("mercadoLivreResults").innerHTML = "";
+    mostrarMensagemMercadoLivre("Consultando a API do Mercado Livre...");
+
+    try {
+        const resposta = await fetchAdmin(
+            `${API}/integracoes/mercado-livre/buscar?q=${encodeURIComponent(termo)}`
+        );
+        const resultado = await resposta.json();
+        if (!resposta.ok) {
+            throw new Error(resultado.detail || "Não foi possível consultar o Mercado Livre.");
+        }
+        renderizarResultadosMercadoLivre(resultado.resultados || []);
+    } catch (erro) {
+        mostrarMensagemMercadoLivre(erro.message, true);
+    } finally {
+        botao.disabled = false;
+        botao.textContent = "Buscar produtos";
+    }
+}
+
+function usarResultadoMercadoLivre(event) {
+    const botao = event.target.closest("[data-marketplace-index]");
+    if (!botao) return;
+
+    if (editandoId !== null) {
+        toast("Finalize ou cancele a edição atual antes de importar.");
+        return;
+    }
+
+    const produto = resultadosMercadoLivre[Number(botao.dataset.marketplaceIndex)];
+    if (!produto) return;
+
+    $("nomeProduto").value = produto.nome || "";
+    $("categoria").value = "";
+    $("descricao").value = "";
+    $("precoAntigo").value = produto.preco_antigo ?? "";
+    $("precoAtual").value = produto.preco_atual ?? "";
+    $("loja").value = "Mercado Livre";
+    $("imagem").value = produto.imagem || "";
+    $("linkProduto").value = produto.link_produto || "";
+    $("linkAfiliado").value = "";
+    $("avaliacao").value = "";
+    calcularDesconto();
+    atualizarPreview();
+
+    mostrarMensagemMercadoLivre(
+        "Dados preenchidos. Escolha a categoria, confira os valores e adicione seu link de afiliado antes de cadastrar."
+    );
+    $("formPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+    $("nomeProduto").focus();
 }
 
 function escapeHtml(valor) {
@@ -70,6 +237,14 @@ function calcularDesconto() {
 }
 
 function limparPreview() {
+    imagemArquivoPendente = null;
+    $("imagemArquivo").value = "";
+    $("imageFileStatus").textContent = "A foto será enviada ao salvar a oferta.";
+    $("imageFileStatus").classList.remove("error");
+    if (imagemPreviewLocal) {
+        URL.revokeObjectURL(imagemPreviewLocal);
+        imagemPreviewLocal = null;
+    }
     $("previewImage").removeAttribute("src");
     $("previewImage").style.display = "none";
     $("previewText").style.display = "block";
@@ -78,6 +253,16 @@ function limparPreview() {
 
 function atualizarPreview() {
     const url = $("imagem").value.trim();
+
+    if (imagemArquivoPendente) {
+        imagemArquivoPendente = null;
+        $("imagemArquivo").value = "";
+        $("imageFileStatus").textContent = "Usando a imagem informada pela URL.";
+        if (imagemPreviewLocal) {
+            URL.revokeObjectURL(imagemPreviewLocal);
+            imagemPreviewLocal = null;
+        }
+    }
 
     if (!url) {
         limparPreview();
@@ -97,8 +282,58 @@ function atualizarPreview() {
     img.src = url;
 }
 
+function selecionarImagemArquivo(file) {
+    const status = $("imageFileStatus");
+    const tiposAceitos = ["image/jpeg", "image/png", "image/webp"];
+    if (!file) return;
+
+    if (!tiposAceitos.includes(file.type)) {
+        status.textContent = "Formato inválido. Escolha uma imagem JPG, PNG ou WebP.";
+        status.classList.add("error");
+        $("imagemArquivo").value = "";
+        return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+        status.textContent = "A imagem excede o limite de 5 MB.";
+        status.classList.add("error");
+        $("imagemArquivo").value = "";
+        return;
+    }
+
+    imagemArquivoPendente = file;
+    $("imagem").value = "";
+    status.textContent = `${file.name} · ${(file.size / (1024 * 1024)).toFixed(2)} MB · será enviada ao salvar`;
+    status.classList.remove("error");
+
+    if (imagemPreviewLocal) URL.revokeObjectURL(imagemPreviewLocal);
+    imagemPreviewLocal = URL.createObjectURL(file);
+    const img = $("previewImage");
+    img.src = imagemPreviewLocal;
+    img.style.display = "block";
+    $("previewText").style.display = "none";
+}
+
+async function enviarImagemPendente() {
+    if (!imagemArquivoPendente) return $("imagem").value.trim() || null;
+
+    const resposta = await fetchAdmin(`${API}/uploads/imagens`, {
+        method: "POST",
+        headers: {
+            "Content-Type": imagemArquivoPendente.type,
+            "Accept": "application/json"
+        },
+        body: imagemArquivoPendente
+    });
+    const resultado = await resposta.json();
+    if (!resposta.ok) {
+        throw new Error(resultado.detail || "Não foi possível enviar a imagem.");
+    }
+    return resultado.url;
+}
+
 async function carregarCategorias() {
-    const resposta = await fetch(`${API}/categorias/`);
+    const resposta = await fetchAdmin(`${API}/categorias/`);
 
     if (!resposta.ok) {
         throw new Error("Não foi possível carregar as categorias.");
@@ -126,7 +361,7 @@ async function carregarProdutos() {
     $("listaProdutos").innerHTML = '<div class="loading">Carregando ofertas...</div>';
 
     try {
-        const resposta = await fetch(`${API}/produtos/`);
+        const resposta = await fetchAdmin(`${API}/produtos/`);
 
         if (!resposta.ok) {
             throw new Error(`HTTP ${resposta.status}`);
@@ -275,6 +510,8 @@ function preencherFormulario(produto) {
     $("linkProduto").value = produto.link_produto ?? "";
     $("linkAfiliado").value = produto.link_afiliado ?? "";
 
+    limparPreview();
+    $("imagem").value = produto.imagem ?? "";
     atualizarPreview();
     $("formPanel").scrollIntoView({ behavior: "smooth", block: "start" });
     $("nomeProduto").focus();
@@ -345,7 +582,9 @@ async function salvarProduto(event) {
             ? "Salvando..."
             : "Cadastrando...";
 
-        const resposta = await fetch(url, {
+        dados.imagem = await enviarImagemPendente();
+
+        const resposta = await fetchAdmin(url, {
             method,
             headers: {
                 "Content-Type": "application/json",
@@ -407,7 +646,7 @@ async function excluirProduto() {
         $("btnModalExcluir").disabled = true;
         $("btnModalExcluir").textContent = "Excluindo...";
 
-        const resposta = await fetch(`${API}/produtos/${id}`, {
+        const resposta = await fetchAdmin(`${API}/produtos/${id}`, {
             method: "DELETE"
         });
 
@@ -453,11 +692,38 @@ function tratarAcaoProduto(event) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+    $("adminLoginForm").addEventListener("submit", entrarNoPainel);
+    $("btnLogout").addEventListener("click", () => {
+        sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+        location.reload();
+    });
     $("precoAntigo").addEventListener("input", calcularDesconto);
     $("precoAtual").addEventListener("input", calcularDesconto);
     $("imagem").addEventListener("input", atualizarPreview);
+    $("imagemArquivo").addEventListener("change", event => {
+        selecionarImagemArquivo(event.target.files?.[0]);
+    });
+    const imageDropzone = $("imageDropzone");
+    ["dragenter", "dragover"].forEach(type => imageDropzone.addEventListener(type, event => {
+        event.preventDefault();
+        imageDropzone.classList.add("dragging");
+    }));
+    ["dragleave", "drop"].forEach(type => imageDropzone.addEventListener(type, event => {
+        event.preventDefault();
+        imageDropzone.classList.remove("dragging");
+    }));
+    imageDropzone.addEventListener("drop", event => {
+        const file = event.dataTransfer?.files?.[0];
+        if (!file) return;
+        const transfer = new DataTransfer();
+        transfer.items.add(file);
+        $("imagemArquivo").files = transfer.files;
+        selecionarImagemArquivo(file);
+    });
 
     $("offerForm").addEventListener("submit", salvarProduto);
+    $("mercadoLivreSearchForm").addEventListener("submit", buscarNoMercadoLivre);
+    $("mercadoLivreResults").addEventListener("click", usarResultadoMercadoLivre);
 
     $("btnLimpar").addEventListener("click", limparFormulario);
     $("btnCancelarEdicao").addEventListener("click", limparFormulario);
@@ -488,6 +754,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     try {
+        await prepararAutenticacao();
         await carregarCategorias();
         await carregarProdutos();
     } catch (erro) {

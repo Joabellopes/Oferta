@@ -4,13 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Ofertas do Joabel - produtos e promoções em um só lugar.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ofertas do Joabel">
+    <meta property="og:title" content="Ofertas do Joabel | Produtos e boas ofertas">
+    <meta property="og:description" content="Descubra produtos para o dia a dia e encontre ofertas em diferentes lojas.">
     <title>Ofertas do Joabel</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="css/style.css?v=launch-ready2">
 </head>
 
-<body>
+<body class="home-page">
 
 <header class="hero">
+    <canvas class="hero-particles" aria-hidden="true"></canvas>
     <div class="container">
         <nav class="navbar">
             <a href="index.html" class="logo">
@@ -38,19 +44,22 @@
 </div>
         </nav>
 
+        <div class="hero-art" aria-hidden="true">
+            <img src="images/hero-3d-v2.png" alt="" fetchpriority="high">
+        </div>
+
         <div class="hero-content">
             <div class="hero-text">
-                <span class="hero-tag">🔥 OFERTAS TODOS OS DIAS</span>
+                <span class="hero-tag">OFERTAS ESCOLHIDAS PARA VOCÊ</span>
 
                 <h1>
-                    ENCONTRE.<br>
-                    COMPARE.<br>
-                    <strong>ECONOMIZE.</strong>
+                    BONS PRODUTOS.<br>
+                    BOAS OFERTAS.<br>
+                    <strong>BOAS ESCOLHAS.</strong>
                 </h1>
 
                 <p>
-                    Os melhores produtos e promoções
-                    encontrados em um só lugar.
+                    Descubra produtos para o seu dia a dia e encontre ofertas em diferentes lojas.
                 </p>
             </div>
 
@@ -70,14 +79,14 @@
 <section id="categorias" class="categorias">
     <div class="container">
         <div class="section-header">
-            <span>EXPLORE</span>
+            <span>EXPLORE A VITRINE</span>
             <h2>Encontre por categoria</h2>
+            <p>Escolha um tema e descubra produtos selecionados.</p>
         </div>
 
         <div class="categorias-lista">
             <button
                 type="button"
-                id="btn-todas"
                 id="btn-todas" class="categoria ativa"
                 onclick="carregarProdutos()"
             >
@@ -93,7 +102,7 @@
     <div class="section-header ofertas-header">
         <div>
             <span>SELEÇÃO JOABEL</span>
-            <h2>Ofertas em destaque</h2>
+            <h2>Ofertas para descobrir</h2>
         </div>
     </div>
 
@@ -107,33 +116,34 @@
 <section class="beneficios">
     <div class="container">
         <div class="section-header">
-            <span>POR QUE OFERTAS DO JOABEL?</span>
-            <h2>Comprar melhor começa<br>por encontrar melhor.</h2>
+            <span>COMPRAR COM MAIS CLAREZA</span>
+            <h2>Encontre. Compare.<br>Escolha com confiança.</h2>
+            <p>Veja como encontrar uma oferta e seguir para a loja.</p>
         </div>
 
         <div class="beneficios-grid">
             <div class="beneficio">
                 <div class="beneficio-numero">01</div>
-                <h3>Encontre</h3>
-                <p>Produtos selecionados em diferentes lojas.</p>
+                <h3>Explore</h3>
+                <p>Descubra produtos em várias categorias.</p>
             </div>
 
             <div class="beneficio">
                 <div class="beneficio-numero">02</div>
                 <h3>Compare</h3>
-                <p>Veja preços e descontos antes de comprar.</p>
+                <p>Confira o preço e o desconto informado.</p>
             </div>
 
             <div class="beneficio">
                 <div class="beneficio-numero">03</div>
-                <h3>Economize</h3>
-                <p>Aproveite ofertas e promoções encontradas.</p>
+                <h3>Escolha</h3>
+                <p>Veja os detalhes antes de seguir para a loja.</p>
             </div>
 
             <div class="beneficio">
                 <div class="beneficio-numero">04</div>
-                <h3>Compre</h3>
-                <p>Acesse diretamente a loja da oferta.</p>
+                <h3>Acesse a loja</h3>
+                <p>Encontre o link da oferta na página do produto.</p>
             </div>
         </div>
     </div>
@@ -141,9 +151,13 @@
 
 <section class="cta">
     <div class="container">
-        <span>OFERTAS DO JOABEL</span>
-        <h2>A próxima oferta<br>pode estar aqui.</h2>
-        <a href="#ofertas">EXPLORAR OFERTAS →</a>
+        <div class="cta-content">
+            <div class="cta-copy">
+                <span>SUA PRÓXIMA DESCOBERTA</span>
+                <h2>Explore ofertas para o seu dia a dia.</h2>
+            </div>
+            <a href="#ofertas">ENCONTRAR OFERTAS <span aria-hidden="true">→</span></a>
+        </div>
     </div>
 </section>
 
@@ -154,6 +168,7 @@
                 OFERTAS<span>DO JOABEL</span>
             </a>
             <p>As melhores ofertas em um só lugar.</p>
+            <small class="aviso-afiliado-home">Alguns links podem gerar comissão, sem custo adicional para você.</small>
         </div>
 
         <div class="footer-copy">
@@ -162,6 +177,6 @@
     </div>
 </footer>
 
-<script src="js/app.js?v=3"></script>
+<script src="js/app.js?v=launch-ready2"></script>
 </body>
 </html>

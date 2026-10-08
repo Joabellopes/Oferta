@@ -1,25 +1,51 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
+from urllib.parse import urlsplit
 
 from ..database.database import get_db
 from ..database.tables import Produto, Categoria
+from ..security import require_admin
 
 router = APIRouter(prefix="/produtos", tags=["Produtos"])
 
 
 class ProdutoCreate(BaseModel):
-    nome: str = Field(min_length=1)
-    descricao: str | None = None
+    nome: str = Field(min_length=1, max_length=255)
+    descricao: str | None = Field(default=None, max_length=5000)
     preco_antigo: float | None = Field(default=None, ge=0)
     preco_atual: float = Field(gt=0)
     desconto: float | None = Field(default=None, ge=0, le=100)
-    imagem: str | None = None
+    imagem: str | None = Field(default=None, max_length=500)
     categoria_id: int | None = Field(default=None, gt=0)
-    loja: str = Field(min_length=1)
-    link_produto: str | None = None
-    link_afiliado: str | None = None
+    loja: str = Field(min_length=1, max_length=50)
+    link_produto: str | None = Field(default=None, max_length=1000)
+    link_afiliado: str | None = Field(default=None, max_length=1000)
     avaliacao: float | None = Field(default=None, ge=0, le=5)
+
+    @field_validator("link_produto", "link_afiliado")
+    @classmethod
+    def validar_links_de_compra(cls, value: str | None):
+        if value is None or not value.strip():
+            return None
+        parsed = urlsplit(value.strip())
+        if parsed.scheme != "https" or not parsed.netloc:
+            raise ValueError("Links de produto e afiliado devem usar HTTPS.")
+        return value.strip()
+
+    @field_validator("imagem")
+    @classmethod
+    def validar_imagem(cls, value: str | None):
+        if value is None or not value.strip():
+            return None
+        value = value.strip()
+        parsed = urlsplit(value)
+        if parsed.scheme:
+            if parsed.scheme != "https" or not parsed.netloc:
+                raise ValueError("A imagem deve usar uma URL HTTPS.")
+        elif value.startswith(("//", "\\")) or ".." in value.split("/") or "\\" in value:
+            raise ValueError("Informe uma URL HTTPS ou caminho relativo de imagem válido.")
+        return value
 
 
 class ProdutoResponse(BaseModel):
@@ -168,7 +194,8 @@ def buscar_produto(
 @router.post(
     "/",
     response_model=ProdutoResponse,
-    status_code=201
+    status_code=201,
+    dependencies=[Depends(require_admin)],
 )
 def criar_produto(
     dados: ProdutoCreate,
@@ -203,7 +230,8 @@ def criar_produto(
 
 @router.put(
     "/{produto_id}",
-    response_model=ProdutoResponse
+    response_model=ProdutoResponse,
+    dependencies=[Depends(require_admin)],
 )
 def atualizar_produto(
     produto_id: int,
@@ -246,7 +274,7 @@ def atualizar_produto(
     return produto
 
 
-@router.delete("/{produto_id}")
+@router.delete("/{produto_id}", dependencies=[Depends(require_admin)])
 def excluir_produto(
     produto_id: int,
     db: Session = Depends(get_db)
